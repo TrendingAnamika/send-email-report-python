@@ -1,0 +1,88 @@
+from datetime import date
+from datetime import timedelta
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+
+
+
+fromMail = "anamika.shekhar.singh@gmail.com"
+toMail = "anamika.shivay@gmail.com,anamika.shekhar.singh@gmail.com,anamika.shivay@gmail.com"
+fileLocation = "C:/Users/Anamika_Singh/Desktop/test/test.csv"
+
+def html_report(fileName, fileLocation, fromMail, toMail):
+    try:
+        html_data = """<!DOCTYPE html>
+            <body>
+            <p style="margin-left: 5px">
+            Hi Team,<br><br>
+            Please find the attached document to view the daily report from MongoDB.
+            <br>
+            <br>
+            
+            <b>Regards</b>,<br> 
+            <b>AlgoAnalytics Team</b>
+            </p> 
+            </body>
+            </html>"""
+
+        html = html_data
+        html_part = MIMEText(html, 'html')
+        message = MIMEMultipart('multipart')
+        message.attach(html_part)
+
+        message['Subject'] = "MongoDB Database and Collection Daily Stats"
+        message['From'] = fromMail
+        toMail = toMail.split(",")
+        message['To'] = ", ".join(toMail)
+
+
+        fileAttachment = open(fileLocation, 'rb')
+        obj = MIMEBase('application', 'octet-stream')
+        obj.set_payload((fileAttachment).read())
+        encoders.encode_base64(obj)
+        obj.add_header('Content-Disposition', "attachment; fileName= " + fileName)
+        message.attach(obj)
+        my_message = message.as_string()
+
+
+
+        #s = smtplib.SMTP('localhost')
+        smtpHost = smtplib.SMTP('smtp.gmail.com',587)
+        smtpHost.starttls()
+        smtpHost.login(fromMail,'@Shekhar00')
+        smtpHost.sendmail(fromMail, toMail, message.as_string())
+        smtpHost.quit()
+        print("YOUR MAIL HAS BEEN SENT SUCCESSFULLY")
+
+
+    except Exception as exception:\
+    print(exception)
+
+
+#delete the older files from output directory
+
+outputDir = "C:/Users/Anamika_Singh/Desktop/test"
+def deleteOlderFiles(outputDir) :
+    import os
+    try:
+        for root, dirs, files in os.walk(outputDir):
+            for file in files:
+                if file.find('test_1.csv') :
+                    os.remove(os.path.join(root, file))
+
+    except Exception as exception:\
+    print(exception)
+
+
+env = "Prod"
+
+if (env != "Prod"):
+    print ("do UAT")
+else:
+    html_report(fileLocation.split("/")[-1], fileLocation, fromMail, toMail)
+
+    #deleting older files
+    deleteOlderFiles(outputDir)
